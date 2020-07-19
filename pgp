@@ -1,0 +1,63 @@
+#!/bin/bash
+
+tmp="$( cat $HOME/PGP/DATA/mail.txt )"
+
+if [ "$1" == "create" ]; then
+    gpg --gen-key
+    read -p "Mail: " tmp
+    echo $tmp > $HOME/PGP/DATA/mail.txt
+    gpg --batch --yes --output "$HOME/PGP/KEYS/$tmp.key" --armor --export "$tmp"
+    gpg --batch --yes --sign-key $tmp
+    cat KEYS/$tmp.key
+fi
+
+if [ "$1" == "sign" ]; then
+    emacs -nw $HOME/PGP/DATA/message.txt
+    gpg -u $tmp --clear-sign "$HOME/PGP/DATA/message.txt"
+    cat $HOME/PGP/DATA/message.txt.asc
+    rm $HOME/PGP/DATA/message.txt $HOME/PGP/DATA/message.txt.asc 
+fi
+
+if [ "$1" == "verify" ]; then
+    emacs -nw $HOME/PGP/DATA/message.txt
+    gpg --batch --yes --verify "$HOME/PGP/DATA/message.txt" 2>&1 | grep "Good signature"
+    gpg --batch --yes --verify "$HOME/PGP/DATA/message.txt" 2>&1 | grep "BAD signature"
+    rm $HOME/PGP/DATA/message.txt
+fi
+
+if [ "$1" == "encrypt" ]; then
+    read -p "Mail of Recipient: " mail
+    emacs -nw $HOME/PGP/DATA/message.txt
+    cat $HOME/PGP/DATA/message.txt | gpg --batch --yes --always-trust --encrypt --armor -r "$mail"
+    rm $HOME/PGP/DATA/message.txt
+fi
+
+if [ "$1" == "decrypt" ]; then
+    emacs -nw $HOME/PGP/DATA/message.txt
+    cat $HOME/PGP/DATA/message.txt | gpg --batch --yes --decrypt
+    rm $HOME/PGP/DATA/message.txt
+fi
+
+if [ "$1" == "import" ]; then
+    emacs -nw $HOME/PGP/DATA/message.txt
+    str=$( gpg --import "$HOME/PGP/DATA/message.txt" 2>&1 )
+    echo $str
+    mail=$( echo $str | grep -o -P '(?<=<).*(?=>)' )
+    gpg --batch --yes --sign-key $mail
+    rm $HOME/PGP/DATA/message.txt
+fi
+
+if [ "$1" == "--help" ] || [ "$1" == "help" ]; then
+    echo "pgp [command]"
+    echo ""
+    echo "    create  - Generate new key-pair"
+    echo "    import  - Import public key"
+    echo ""
+    echo "    sign    - Sign a message"
+    echo "    verify  - Verify a signed message"
+    echo ""
+    echo "    encrypt - Encrypt a message"
+    echo "    decrypt - Decrypt a message"
+    echo ""
+    echo "Written by Levi Jacobs"
+fi
