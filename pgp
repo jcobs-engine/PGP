@@ -20,8 +20,7 @@ fi
 
 if [ "$1" == "verify" ]; then
     emacs -nw $HOME/PGP/DATA/message.txt
-    gpg --batch --yes --verify "$HOME/PGP/DATA/message.txt" 2>&1 | grep "Good signature"
-    gpg --batch --yes --verify "$HOME/PGP/DATA/message.txt" 2>&1 | grep "BAD signature"
+    gpg --batch --yes --verify "$HOME/PGP/DATA/message.txt"
     rm $HOME/PGP/DATA/message.txt
 fi
 
